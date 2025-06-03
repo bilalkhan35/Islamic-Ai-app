@@ -19,8 +19,7 @@ const AsmaulHusnaPage = () => {
           method: "GET",
           headers: {
             "x-rapidapi-host": "islamic-developers-api.p.rapidapi.com",
-            "x-rapidapi-key":
-              "68bb0b67d6msh5706d3e04f8b62bp12df22jsnb6d1fec3b0d7", // Replace with your actual API key
+            "x-rapidapi-key": `${import.meta.env.VITE_ASMA_API_KEY}`, // Replace with your actual API key
           },
         }
       );
