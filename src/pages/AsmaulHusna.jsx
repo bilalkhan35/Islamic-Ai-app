@@ -5,32 +5,44 @@ const AsmaulHusnaPage = () => {
   const [asma, setAsma] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [asmaNumber, setAsmaNumber] = useState(1); // Keep track of the current Asma number
+  const [asmaNumber, setAsmaNumber] = useState(1);
 
   useEffect(() => {
     fetchAsma();
-  }, [asmaNumber]); // Fetch new Asma when the Asma number changes
+  }, [asmaNumber]);
 
   const fetchAsma = async () => {
     try {
-      const response = await fetch(
-        `https://islamic-developers-api.p.rapidapi.com/al-asma-ul-husna?number=${asmaNumber}`,
-        {
-          method: "GET",
-          headers: {
-            "x-rapidapi-host": "islamic-developers-api.p.rapidapi.com",
-            "x-rapidapi-key": `${import.meta.env.VITE_ASMA_API_KEY}`, // Replace with your actual API key
-          },
-        }
-      );
+      const cached = localStorage.getItem(`asmaulhusna_${asmaNumber}`);
+      if (cached) {
+        setAsma(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
 
+      const response = await fetch("https://api.aladhan.com/v1/asmaAlHusna");
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log(data); // Checking the API response
-      setAsma(data); // Assuming the data contains an object with Asma details
+      const namesArray = data.data;
+      const nameObj = Array.isArray(namesArray)
+        ? namesArray[asmaNumber - 1]
+        : null;
+
+      if (!nameObj) {
+        setError("No Asma available at the moment.");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem(
+        `asmaulhusna_${asmaNumber}`,
+        JSON.stringify(nameObj)
+      );
+
+      setAsma(nameObj);
     } catch (error) {
       console.error("API Error:", error);
       setError("Failed to load Asma. Please try again later.");
@@ -40,14 +52,14 @@ const AsmaulHusnaPage = () => {
   };
 
   const handleNextAsma = () => {
-    setAsmaNumber((prevNumber) => (prevNumber < 99 ? prevNumber + 1 : 1)); // Loop back to 1 after 99
-    setLoading(true); // Set loading to true before fetching new data
+    setAsmaNumber((prevNumber) => (prevNumber < 99 ? prevNumber + 1 : 1));
+    setLoading(true);
   };
 
   return (
     <div className="daily-dua-container p-6 text-center">
       <h1 className="text-3xl mb-4 text-emerald-700 font-bold">
-        الأسما ء الحسنى
+        الأسماء الحسنى
       </h1>
       <div className="bg-white shadow rounded p-6 max-w-2xl mx-auto">
         {loading ? (
@@ -56,18 +68,18 @@ const AsmaulHusnaPage = () => {
           <p className="text-red-500">{error}</p>
         ) : asma ? (
           <>
-            {/* Display the Arabic and Latin Name */}
             <h2 className="text-2xl font-semibold">
-              <span className="text-emerald-600">{asma.native}</span> <br />
-              <span className="text-gray-500">{asma.latin}</span>
+              <span className="text-emerald-600">{asma.name}</span>
+              <br />
+              <span className="text-gray-500">
+                {asma.transliteration} — {asma.en.meaning}
+              </span>
             </h2>
-
-            {/* Button to fetch next Asma */}
             <button
               onClick={handleNextAsma}
-              className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+              className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 cursor-pointer"
             >
-              التالي
+              Next
             </button>
           </>
         ) : (
